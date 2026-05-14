@@ -163,7 +163,7 @@ function buyUpgrade(type) {
     saveGame();
   }
 }
-window.buyUpgrade = buyUpgrade; // used by HTML onclick
+window.buyUpgrade = buyUpgrade;
 
 // -------------------- CLICK HANDLERS --------------------
 function handleClick(e, gain) {
@@ -290,7 +290,6 @@ function loadGame() {
 
   db.ref("players/" + playerToken).once("value").then(snapshot => {
     if (!snapshot.exists()) {
-      // New player
       updateShop();
       updateStats();
       renderAchievements();
@@ -328,15 +327,8 @@ function loadGame() {
   });
 }
 
-// -------------------- GLOBAL LEADERBOARDS (REAL, ONLINE) --------------------
-// We compute multiple leaderboards from all players:
-// - Top Current Score
-// - Top All-Time Rocks
-// - Top Prestige Multiplier
-// - Top Combined (score * prestige)
-
-function updateGlobalLeaderboards(playerData) {
-  // We don't need a separate node; we just recompute from /players
+// -------------------- GLOBAL LEADERBOARDS --------------------
+function updateGlobalLeaderboards() {
   loadLeaderboards();
 }
 
@@ -365,50 +357,34 @@ function loadLeaderboards() {
     let lines = [];
 
     lines.push("=== Top Current Score ===");
-    if (byCurrentScore.length === 0) {
-      lines.push("No players yet.");
-    } else {
-      byCurrentScore.forEach((p, i) => {
-        lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.score)} score`);
-      });
-    }
+    byCurrentScore.forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.score)} score`);
+    });
 
     lines.push("");
     lines.push("=== Top All-Time Rocks ===");
-    if (byAllTime.length === 0) {
-      lines.push("No players yet.");
-    } else {
-      byAllTime.forEach((p, i) => {
-        lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.totalRocksAllTime)} rocks`);
-      });
-    }
+    byAllTime.forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.totalRocksAllTime)} rocks`);
+    });
 
     lines.push("");
     lines.push("=== Top Prestige Multiplier ===");
-    if (byPrestige.length === 0) {
-      lines.push("No players yet.");
-    } else {
-      byPrestige.forEach((p, i) => {
-        lines.push(`${i + 1}. ${p.name} — x${p.prestigeMultiplier}`);
-      });
-    }
+    byPrestige.forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.name} — x${p.prestigeMultiplier}`);
+    });
 
     lines.push("");
     lines.push("=== Top Combined (Score × Prestige) ===");
-    if (byCombined.length === 0) {
-      lines.push("No players yet.");
-    } else {
-      byCombined.forEach((p, i) => {
-        const combined = Math.floor(p.score * p.prestigeMultiplier);
-        lines.push(`${i + 1}. ${p.name} — ${combined} power`);
-      });
-    }
+    byCombined.forEach((p, i) => {
+      const combined = Math.floor(p.score * p.prestigeMultiplier);
+      lines.push(`${i + 1}. ${p.name} — ${combined} power`);
+    });
 
     leaderboardList.textContent = lines.join("\n");
   });
 }
 
-// -------------------- NAME SCREEN / START --------------------
+// -------------------- NAME SCREEN --------------------
 startBtn.addEventListener("click", () => {
   let name = nameInput.value.trim();
   if (!name) name = "Guest";
