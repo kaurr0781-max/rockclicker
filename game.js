@@ -33,14 +33,24 @@ let combo = 0;
 let comboMultiplier = 1;
 let lastClickTime = 0;
 
+const BASE_UPGRADE_COSTS = {
+  clickPower: 10,
+  autoMiner: 50,
+  drill: 200,
+  factory: 1000,
+  quarry: 5000,
+  robot: 20000,
+  volcano: 100000
+};
+
 let upgrades = {
-  clickPower: { cost: 10, increase: 1 },
-  autoMiner: { cost: 50, increase: 1 },
-  drill: { cost: 200, increase: 5 },
-  factory: { cost: 1000, increase: 20 },
-  quarry: { cost: 5000, increase: 75 },
-  robot: { cost: 20000, increase: 250 },
-  volcano: { cost: 100000, increase: 1000 }
+  clickPower: { cost: BASE_UPGRADE_COSTS.clickPower, increase: 1, type: "click" },
+  autoMiner: { cost: BASE_UPGRADE_COSTS.autoMiner, increase: 1, type: "passive" },
+  drill: { cost: BASE_UPGRADE_COSTS.drill, increase: 5, type: "passive" },
+  factory: { cost: BASE_UPGRADE_COSTS.factory, increase: 20, type: "passive" },
+  quarry: { cost: BASE_UPGRADE_COSTS.quarry, increase: 75, type: "passive" },
+  robot: { cost: BASE_UPGRADE_COSTS.robot, increase: 250, type: "passive" },
+  volcano: { cost: BASE_UPGRADE_COSTS.volcano, increase: 1000, type: "passive" }
 };
 
 let achievements = [
@@ -69,7 +79,7 @@ function getPerSecond() {
   return perSecondBase * prestigeMultiplier;
 }
 
-// Basic anti-cheat sanity clamp
+// Anti-cheat sanity clamp
 function clampState() {
   const maxVal = 1e15;
   const maxRate = 1e9;
@@ -101,12 +111,13 @@ function updateShop() {
 }
 
 // -------------------- PARTICLES --------------------
-function spawnParticle(x, y, text) {
+function spawnParticle(x, y, text, color = "#facc15") {
   const rect = document.body.getBoundingClientRect();
   const particle = document.createElement("div");
   particle.className = "particle";
   particle.style.left = (x - rect.left - 20) + "px";
   particle.style.top = (y - rect.top - 20) + "px";
+  particle.style.color = color;
   particle.textContent = text;
   document.body.appendChild(particle);
   setTimeout(() => particle.remove(), 600);
@@ -137,6 +148,8 @@ function checkAchievements() {
     if (!a.unlocked && a.condition()) {
       a.unlocked = true;
       changed = true;
+      // small popup particle at top center
+      spawnParticle(window.innerWidth / 2, 60, "Achievement: " + a.title, "#22c55e");
     }
   });
   if (changed) renderAchievements();
@@ -144,13 +157,13 @@ function checkAchievements() {
 
 // -------------------- SHOP / UPGRADES --------------------
 function buyUpgrade(type) {
-  let upgrade = upgrades[type];
+  const upgrade = upgrades[type];
   if (!upgrade) return;
 
   if (score >= upgrade.cost) {
     score -= upgrade.cost;
 
-    if (type === "clickPower") {
+    if (upgrade.type === "click") {
       perClickBase += upgrade.increase;
     } else {
       perSecondBase += upgrade.increase;
@@ -166,7 +179,7 @@ function buyUpgrade(type) {
 window.buyUpgrade = buyUpgrade;
 
 // -------------------- CLICK HANDLERS --------------------
-function handleClick(e, gain) {
+function handleClick(e, gain, isGolden = false) {
   const now = Date.now();
   if (now - lastClickTime < 600) {
     combo++;
@@ -182,17 +195,17 @@ function handleClick(e, gain) {
   totalRocksAllTime += totalGain;
 
   clampState();
-  spawnParticle(e.clientX, e.clientY, "+" + totalGain);
+  spawnParticle(e.clientX, e.clientY, "+" + totalGain, isGolden ? "#fde047" : "#facc15");
   updateStats();
   checkAchievements();
 }
 
 rockImg.addEventListener("click", (e) => {
-  handleClick(e, getPerClick());
+  handleClick(e, getPerClick(), false);
 });
 
 goldenRock.addEventListener("click", (e) => {
-  handleClick(e, getPerClick() * 100);
+  handleClick(e, getPerClick() * 100, true);
   goldenRock.style.display = "none";
 });
 
@@ -208,17 +221,8 @@ function doPrestige() {
   perSecondBase = 0;
   totalRocksAllTime = 0;
 
-  const baseCosts = {
-    clickPower: 10,
-    autoMiner: 50,
-    drill: 200,
-    factory: 1000,
-    quarry: 5000,
-    robot: 20000,
-    volcano: 100000
-  };
   Object.keys(upgrades).forEach(k => {
-    upgrades[k].cost = baseCosts[k];
+    upgrades[k].cost = BASE_UPGRADE_COSTS[k];
   });
 
   const ach = achievements.find(a => a.id === "a6");
@@ -245,7 +249,7 @@ setInterval(spawnGoldenRock, 30000);
 
 // -------------------- TICK LOOP --------------------
 function tick() {
-  let gain = getPerSecond();
+  const gain = getPerSecond();
   if (gain > 0) {
     score += gain;
     totalRocksAllTime += gain;
@@ -281,7 +285,7 @@ function saveGame() {
   };
 
   db.ref("players/" + playerToken).set(data)
-    .then(() => updateGlobalLeaderboards(data))
+    .then(() => updateGlobalLeaderboards())
     .catch(() => {});
 }
 
@@ -289,7 +293,7 @@ function loadGame() {
   if (!playerToken) return;
 
   db.ref("players/" + playerToken).once("value").then(snapshot => {
-    if (!snapshot.exists()) {
+    if (!snapshot.exists() || snapshot.val() === null) {
       updateShop();
       updateStats();
       renderAchievements();
@@ -400,4 +404,3 @@ startBtn.addEventListener("click", () => {
 
 // -------------------- AUTO-SAVE --------------------
 setInterval(saveGame, 5000);
-
