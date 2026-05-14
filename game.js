@@ -114,7 +114,6 @@ function updateShop() {
     if (el) el.innerText = upgrades[key].cost;
   }
 }
-
 /* -------------------- PARTICLES -------------------- */
 function spawnParticle(x, y, text, color = "#facc15") {
   const rect = document.body.getBoundingClientRect();
@@ -178,7 +177,7 @@ window.buyUpgrade = buyUpgrade;
 /* -------------------- CLICK HANDLERS -------------------- */
 function handleClick(e, gain, isGolden = false) {
   const now = Date.now();
-  combo = now - last.lastClickTime < 600 ? combo + 1 : 1;
+  combo = now - lastClickTime < 600 ? combo + 1 : 1;
   lastClickTime = now;
 
   comboMultiplier = 1 + Math.floor(combo / 10);
@@ -233,7 +232,6 @@ setInterval(() => {
     setTimeout(() => goldenRock.style.display = "none", 5000);
   }
 }, 30000);
-
 /* -------------------- TICK LOOP -------------------- */
 setInterval(() => {
   const gain = getPerSecond();
