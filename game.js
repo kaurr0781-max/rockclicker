@@ -272,15 +272,17 @@ function loadGame() {
   db.ref("players/" + playerToken).once("value").then(snapshot => {
 
     // ⭐ FIXED: ALWAYS SHOW NAME SCREEN IF SAVE IS MISSING
-    if (!snapshot.exists() || snapshot.val() === null) {
-      document.getElementById("nameScreen").style.display = "flex";
-      document.getElementById("gameContainer").style.display = "none";
-      updateShop();
-      updateStats();
-      renderAchievements();
-      loadLeaderboards();
-      return;
-    }
+   if (!snapshot.exists() || snapshot.val() === null) {
+    document.getElementById("nameScreen").style.display = "flex";
+    document.getElementById("gameContainer").classList.remove("show");
+
+    updateShop();
+    updateStats();
+    renderAchievements();
+    loadLeaderboards();
+    return;
+}
+
 
     const data = snapshot.val();
 
@@ -351,17 +353,18 @@ function loadLeaderboards() {
 
 // -------------------- NAME SCREEN --------------------
 startBtn.addEventListener("click", () => {
-  let name = nameInput.value.trim();
-  if (!name) name = "Guest";
-  currentPlayerName = name;
+    let name = nameInput.value.trim();
+    if (!name) name = "Guest";
+    currentPlayerName = name;
 
-  currentPlayerLabel.innerText = "Player: " + currentPlayerName;
+    currentPlayerLabel.innerText = "Player: " + currentPlayerName;
 
-  document.getElementById("nameScreen").style.display = "none";
-  document.getElementById("gameContainer").style.display = "flex";
+    document.getElementById("nameScreen").style.display = "none";
+    document.getElementById("gameContainer").classList.add("show");
 
-  loadGame();
+    loadGame();
 });
+
 
 // -------------------- AUTO-SAVE --------------------
 setInterval(saveGame, 5000);
