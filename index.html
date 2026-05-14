@@ -1,184 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Rock Clicker</title>
-  <meta charset="UTF-8">
-  <style>
+<meta charset="UTF-8">
+<title>Rock Clicker</title>
+<style>
     body {
-      font-family: Arial, sans-serif;
-      background: #1f2933;
-      color: #f9fafb;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: #1e1e1e;
+        color: white;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        user-select: none;
     }
 
     #nameScreen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #020617;
-      color: #f9fafb;
-    }
-
-    #playerNameInput {
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #4b5563;
-      background: #020617;
-      color: #f9fafb;
-      width: 220px;
-      margin-bottom: 10px;
-    }
-
-    #startBtn {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #22c55e;
-      color: #020617;
-      font-weight: bold;
-      cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        gap: 20px;
     }
 
     #gameContainer {
-      display: none;
-      height: 100vh;
-      display: flex;
-      flex-direction: row;
+        display: none; /* FIXED */
+        height: 100vh;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
     }
 
-    #gameArea {
-      flex: 2;
-      text-align: center;
-      padding-top: 30px;
-      position: relative;
+    /* When game should show */
+    #gameContainer.show {
+        display: flex;
     }
 
     #rock {
-      width: 260px;
-      cursor: pointer;
-      transition: transform 0.08s ease;
-      user-select: none;
+        width: 200px;
+        cursor: pointer;
+        transition: transform 0.1s;
     }
 
     #rock:active {
-      transform: scale(0.9);
+        transform: scale(0.9);
     }
 
     #goldenRock {
-      position: absolute;
-      width: 120px;
-      cursor: pointer;
-      display: none;
-      top: 120px;
-      right: 80px;
-      filter: drop-shadow(0 0 10px gold);
-      user-select: none;
+        width: 150px;
+        display: none;
+        cursor: pointer;
+        animation: glow 1s infinite alternate;
     }
 
-    #shop, #leaderboard, #achievements {
-      background: #020617;
-      padding: 10px;
-      border-left: 3px solid #4b5563;
-      overflow-y: auto;
-      font-size: 13px;
-    }
-
-    .upgrade {
-      background: #1f2933;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      border: 1px solid #4b5563;
-    }
-
-    .ach {
-      background: #020617;
-      border-radius: 8px;
-      border: 1px solid #4b5563;
-      padding: 6px;
-      margin-bottom: 6px;
-      opacity: 0.4;
-    }
-
-    .ach.unlocked {
-      border-color: #22c55e;
-      opacity: 1;
+    @keyframes glow {
+        from { filter: drop-shadow(0 0 5px gold); }
+        to { filter: drop-shadow(0 0 20px gold); }
     }
 
     .particle {
-      position: absolute;
-      color: #facc15;
-      font-weight: bold;
-      pointer-events: none;
-      animation: floatUp 0.6s ease-out forwards;
+        position: absolute;
+        font-size: 20px;
+        animation: rise 0.6s ease-out forwards;
+        pointer-events: none;
     }
 
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-40px); }
+    @keyframes rise {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-40px); }
     }
-  </style>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    .shop button {
+        margin: 5px;
+        padding: 10px;
+        background: #333;
+        color: white;
+        border: 1px solid #555;
+        cursor: pointer;
+    }
 
-  <script src="game.js" defer></script>
+    .shop button:hover {
+        background: #444;
+    }
+
+    .ach {
+        margin: 5px;
+        padding: 10px;
+        background: #222;
+        border-left: 4px solid #555;
+        text-align: left;
+    }
+
+    .ach.unlocked {
+        border-left: 4px solid #22c55e;
+    }
+</style>
 </head>
 <body>
 
-  <div id="nameScreen">
-    <h1>ROCK CLICKER — ENTER YOUR NAME</h1>
-    <input id="playerNameInput" type="text" placeholder="Your name">
-    <button id="startBtn">Start Game</button>
-  </div>
+<h1>Rock Clicker</h1>
 
-  <div id="gameContainer">
-    <div id="gameArea">
-      <h1>Rock Clicker</h1>
-      <div id="currentPlayerLabel"></div>
+<!-- NAME SCREEN -->
+<div id="nameScreen">
+    <h2>ROCK CLICKER — ENTER YOUR NAME</h2>
+    <input id="playerNameInput" placeholder="Your name" style="padding:10px;font-size:16px;">
+    <button id="startBtn" style="padding:10px 20px;font-size:16px;background:#22c55e;border:none;color:white;cursor:pointer;">
+        Start Game
+    </button>
+</div>
 
-      <img id="rock" src="rock.png">
-      <img id="goldenRock" src="rock.png">
+<!-- GAME SCREEN -->
+<div id="gameContainer">
+    <div>
+        <img id="rock" src="rock.png">
+        <img id="goldenRock" src="rock.png">
 
-      <div id="stats">
         <p id="score">Rocks: 0</p>
         <p id="perClick">Per Click: 1</p>
         <p id="perSecond">Per Second: 0</p>
         <p id="prestige">Prestige Multiplier: x1</p>
         <p id="combo">Combo: 0 (x1)</p>
-        <button id="prestigeBtn">Prestige</button>
-      </div>
+
+        <button id="prestigeBtn" style="padding:10px;background:#444;color:white;border:none;cursor:pointer;">
+            Prestige
+        </button>
+
+        <p id="currentPlayerLabel">Player: Guest</p>
     </div>
 
-    <div id="shop">
-      <h2>Shop</h2>
-      <div class="upgrade" onclick="buyUpgrade('clickPower')">Click Power — Cost: <span id="clickPowerCost">10</span></div>
-      <div class="upgrade" onclick="buyUpgrade('autoMiner')">Auto Miner — Cost: <span id="autoMinerCost">50</span></div>
-      <div class="upgrade" onclick="buyUpgrade('drill')">Drill — Cost: <span id="drillCost">200</span></div>
-      <div class="upgrade" onclick="buyUpgrade('factory')">Factory — Cost: <span id="factoryCost">1000</span></div>
-      <div class="upgrade" onclick="buyUpgrade('quarry')">Quarry — Cost: <span id="quarryCost">5000</span></div>
-      <div class="upgrade" onclick="buyUpgrade('robot')">Robot — Cost: <span id="robotCost">20000</span></div>
-      <div class="upgrade" onclick="buyUpgrade('volcano')">Volcano — Cost: <span id="volcanoCost">100000</span></div>
+    <div class="shop">
+        <h2>Shop</h2>
+        <button onclick="buyUpgrade('clickPower')">Click Power (<span id="clickPowerCost">10</span>)</button>
+        <button onclick="buyUpgrade('autoMiner')">Auto Miner (<span id="autoMinerCost">50</span>)</button>
+        <button onclick="buyUpgrade('drill')">Drill (<span id="drillCost">200</span>)</button>
+        <button onclick="buyUpgrade('factory')">Factory (<span id="factoryCost">1000</span>)</button>
+        <button onclick="buyUpgrade('quarry')">Quarry (<span id="quarryCost">5000</span>)</button>
+        <button onclick="buyUpgrade('robot')">Robot (<span id="robotCost">20000</span>)</button>
+        <button onclick="buyUpgrade('volcano')">Volcano (<span id="volcanoCost">100000</span>)</button>
     </div>
 
-    <div id="leaderboard">
-      <h2>Leaderboards</h2>
-      <pre id="leaderboardList"></pre>
-    </div>
+    <div>
+        <h2>Achievements</h2>
+        <div id="achList"></div>
 
-    <div id="achievements">
-      <h2>Achievements</h2>
-      <div id="achList"></div>
+        <h2>Leaderboard</h2>
+        <pre id="leaderboardList" style="text-align:left;"></pre>
     </div>
-  </div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- GAME LOGIC -->
+<script src="game.js"></script>
 
 </body>
 </html>
