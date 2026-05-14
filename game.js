@@ -1,8 +1,21 @@
-/* -------------------- FIREBASE INIT -------------------- */
+/* ============================================================
+   PREMIUM CYBERPUNK ROCK CLICKER — FIRESTORE + FS1 MODULES
+   ============================================================ */
+
+/* -------------------- FIREBASE IMPORTS -------------------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+    getFirestore, doc, setDoc, getDoc, updateDoc,
+    collection, query, orderBy, limit, getDocs 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { 
+    getAuth, signInAnonymously, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* -------------------- FIREBASE CONFIG -------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyBtEIDdaZQAy7iQpeCgDgV7W8Xo8feKALA",
   authDomain: "rocket-clicker-64f24.firebaseapp.com",
-  databaseURL: "https://rocket-clicker-64f24-default-rtdb.firebaseio.com",
   projectId: "rocket-clicker-64f24",
   storageBucket: "rocket-clicker-64f24.firebasestorage.app",
   messagingSenderId: "614772464568",
@@ -10,369 +23,244 @@ const firebaseConfig = {
   measurementId: "G-HMZJ48QKPW"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+/* -------------------- INIT FIREBASE -------------------- */
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth();
 
-/* -------------------- AUTH (ANONYMOUS) -------------------- */
-let playerUid = null;
+let uid = null;
 let authReady = false;
 
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    playerUid = user.uid;
-    authReady = true;
-
-    // Delay ensures Firebase finishes before loading
-    setTimeout(() => {
-      loadGame();
-    }, 200);
-  } else {
-    firebase.auth().signInAnonymously().catch(console.error);
-  }
+/* -------------------- AUTH -------------------- */
+onAuthStateChanged(auth, user => {
+    if (user) {
+        uid = user.uid;
+        authReady = true;
+        setTimeout(loadCloudSave, 200);
+    } else {
+        signInAnonymously(auth);
+    }
 });
 
-/* -------------------- GAME STATE -------------------- */
-let score = 0;
-let perClickBase = 1;
-let perSecondBase = 0;
-let prestigeMultiplier = 1;
-let totalRocksAllTime = 0;
-
-let combo = 0;
-let comboMultiplier = 1;
-let lastClickTime = 0;
-
-const BASE_UPGRADE_COSTS = {
-  clickPower: 10,
-  autoMiner: 50,
-  drill: 200,
-  factory: 1000,
-  quarry: 5000,
-  robot: 20000,
-  volcano: 100000
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+let player = {
+    name: "",
+    rocks: 0,
+    goldenRocks: 0,
+    perClick: 1,
+    perSecond: 0,
+    combo: 0,
+    prestige: 0,
+    totalAllTime: 0
 };
 
-let upgrades = {
-  clickPower: { cost: BASE_UPGRADE_COSTS.clickPower, increase: 1, type: "click" },
-  autoMiner: { cost: BASE_UPGRADE_COSTS.autoMiner, increase: 1, type: "passive" },
-  drill: { cost: BASE_UPGRADE_COSTS.drill, increase: 5, type: "passive" },
-  factory: { cost: BASE_UPGRADE_COSTS.factory, increase: 20, type: "passive" },
-  quarry: { cost: BASE_UPGRADE_COSTS.quarry, increase: 75, type: "passive" },
-  robot: { cost: BASE_UPGRADE_COSTS.robot, increase: 250, type: "passive" },
-  volcano: { cost: BASE_UPGRADE_COSTS.volcano, increase: 1000, type: "passive" }
-};
+/* ============================================================
+   DOM ELEMENTS
+   ============================================================ */
+const rock = document.getElementById("rock");
+const goldenRock = document.getElementById("goldenRock");
+const rockCount = document.getElementById("rockCount");
+const goldenCount = document.getElementById("goldenCount");
+const perClick = document.getElementById("perClick");
+const perSecond = document.getElementById("perSecond");
+const comboDisplay = document.getElementById("comboDisplay");
+const shop = document.getElementById("shop");
+const achievements = document.getElementById("achievements");
+const leaderboard = document.getElementById("leaderboard");
+const prestigeBtn = document.getElementById("prestigeBtn");
 
-let achievements = [
-  { id: "a1", title: "First Pebble", desc: "Reach 10 rocks.", condition: () => totalRocksAllTime >= 10, unlocked: false },
-  { id: "a2", title: "Stone Collector", desc: "Reach 1,000 rocks.", condition: () => totalRocksAllTime >= 1000, unlocked: false },
-  { id: "a3", title: "Rock Tycoon", desc: "Reach 100,000 rocks.", condition: () => totalRocksAllTime >= 100000, unlocked: false },
-  { id: "a4", title: "Click Master", desc: "Have 50 per click.", condition: () => getPerClick() >= 50, unlocked: false },
-  { id: "a5", title: "Engine of Stone", desc: "Reach 5,000 rocks/sec.", condition: () => getPerSecond() >= 5000, unlocked: false },
-  { id: "a6", title: "Prestiged", desc: "Prestige at least once.", condition: () => prestigeMultiplier > 1, unlocked: false }
+const nameScreen = document.getElementById("nameScreen");
+const nameInput = document.getElementById("nameInput");
+const saveNameBtn = document.getElementById("saveNameBtn");
+
+/* ============================================================
+   SHOP ITEMS
+   ============================================================ */
+const shopItems = [
+    { id: 1, name: "Stronger Clicks", baseCost: 50, amount: 0, effect: 1 },
+    { id: 2, name: "Auto Miner", baseCost: 200, amount: 0, effect: 1 },
+    { id: 3, name: "Laser Drill", baseCost: 1000, amount: 0, effect: 5 }
 ];
 
-/* -------------------- DOM ELEMENTS -------------------- */
-const rockImg = document.getElementById("rock");
-const goldenRock = document.getElementById("goldenRock");
-const startBtn = document.getElementById("startBtn");
-const nameInput = document.getElementById("playerNameInput");
-const currentPlayerLabel = document.getElementById("currentPlayerLabel");
-const leaderboardList = document.getElementById("leaderboardList");
+/* ============================================================
+   NAME SCREEN
+   ============================================================ */
+saveNameBtn.onclick = async () => {
+    if (!nameInput.value.trim()) return;
+    player.name = nameInput.value.trim();
+    nameScreen.style.display = "none";
+    await saveCloud();
+    loadLeaderboard();
+};
 
-/* -------------------- HELPERS -------------------- */
-function getPerClick() {
-  return perClickBase * prestigeMultiplier;
-}
+/* ============================================================
+   CLICK HANDLING
+   ============================================================ */
+rock.onclick = async () => {
+    player.rocks += player.perClick;
+    player.totalAllTime += player.perClick;
+    player.combo++;
+    updateUI();
+    await saveCloud();
+};
 
-function getPerSecond() {
-  return perSecondBase * prestigeMultiplier;
-}
+goldenRock.onclick = async () => {
+    player.goldenRocks++;
+    player.rocks += 100 * (player.prestige + 1);
+    player.totalAllTime += 100;
+    goldenRock.style.display = "none";
+    updateUI();
+    await saveCloud();
+};
 
-function clampState() {
-  const maxVal = 1e15;
-  const maxRate = 1e9;
-
-  score = Math.max(0, Math.min(score, maxVal));
-  totalRocksAllTime = Math.max(0, Math.min(totalRocksAllTime, maxVal));
-  perClickBase = Math.max(1, Math.min(perClickBase, maxRate));
-  perSecondBase = Math.max(0, Math.min(perSecondBase, maxRate));
-  prestigeMultiplier = Math.max(1, Math.min(prestigeMultiplier, 1e6));
-}
-
-/* -------------------- UI UPDATES -------------------- */
-function updateStats() {
-  document.getElementById("score").innerText = "Rocks: " + Math.floor(score);
-  document.getElementById("perClick").innerText = "Per Click: " + getPerClick();
-  document.getElementById("perSecond").innerText = "Per Second: " + getPerSecond();
-  document.getElementById("prestige").innerText = "Prestige Multiplier: x" + prestigeMultiplier;
-  document.getElementById("combo").innerText = "Combo: " + combo + " (x" + comboMultiplier + ")";
-}
-
-function updateShop() {
-  for (const key in upgrades) {
-    const el = document.getElementById(key + "Cost");
-    if (el) el.innerText = upgrades[key].cost;
-  }
-}
-/* -------------------- PARTICLES -------------------- */
-function spawnParticle(x, y, text, color = "#facc15") {
-  const rect = document.body.getBoundingClientRect();
-  const particle = document.createElement("div");
-  particle.className = "particle";
-  particle.style.left = (x - rect.left - 20) + "px";
-  particle.style.top = (y - rect.top - 20) + "px";
-  particle.style.color = color;
-  particle.textContent = text;
-  document.body.appendChild(particle);
-  setTimeout(() => particle.remove(), 600);
-}
-
-/* -------------------- ACHIEVEMENTS -------------------- */
-function renderAchievements() {
-  const container = document.getElementById("achList");
-  container.innerHTML = "";
-  achievements.forEach(a => {
-    const div = document.createElement("div");
-    div.className = "ach" + (a.unlocked ? " unlocked" : "");
-    div.innerHTML = `<span class="title">${a.title}</span><span class="desc">${a.desc}</span>`;
-    container.appendChild(div);
-  });
-}
-
-function checkAchievements() {
-  let changed = false;
-  achievements.forEach(a => {
-    if (!a.unlocked && a.condition()) {
-      a.unlocked = true;
-      changed = true;
-      spawnParticle(window.innerWidth / 2, 60, "Achievement: " + a.title, "#22c55e");
-    }
-  });
-  if (changed) renderAchievements();
-}
-
-/* -------------------- SHOP -------------------- */
-function buyUpgrade(type) {
-  const upgrade = upgrades[type];
-  if (!upgrade) return;
-
-  if (score >= upgrade.cost) {
-    score -= upgrade.cost;
-
-    if (upgrade.type === "click") {
-      perClickBase += upgrade.increase;
-    } else {
-      perSecondBase += upgrade.increase;
-    }
-
-    upgrade.cost = Math.floor(upgrade.cost * 1.5);
-    clampState();
-    updateShop();
-    updateStats();
-    saveGame();
-  }
-}
-window.buyUpgrade = buyUpgrade;
-
-/* -------------------- CLICK HANDLERS -------------------- */
-function handleClick(e, gain, isGolden = false) {
-  const now = Date.now();
-  combo = now - lastClickTime < 600 ? combo + 1 : 1;
-  lastClickTime = now;
-
-  comboMultiplier = 1 + Math.floor(combo / 10);
-  const totalGain = gain * comboMultiplier;
-
-  score += totalGain;
-  totalRocksAllTime += totalGain;
-
-  clampState();
-  spawnParticle(e.clientX, e.clientY, "+" + totalGain, isGolden ? "#fde047" : "#facc15");
-  updateStats();
-  checkAchievements();
-}
-
-rockImg.addEventListener("click", (e) => handleClick(e, getPerClick()));
-goldenRock.addEventListener("click", (e) => {
-  handleClick(e, getPerClick() * 100, true);
-  goldenRock.style.display = "none";
-});
-
-/* -------------------- PRESTIGE -------------------- */
-function doPrestige() {
-  if (totalRocksAllTime < 10000) return;
-  const bonus = Math.floor(totalRocksAllTime / 10000);
-  if (bonus <= 0) return;
-
-  prestigeMultiplier += bonus;
-  score = 0;
-  perClickBase = 1;
-  perSecondBase = 0;
-  totalRocksAllTime = 0;
-
-  for (const key in upgrades) {
-    upgrades[key].cost = BASE_UPGRADE_COSTS[key];
-  }
-
-  const ach = achievements.find(a => a.id === "a6");
-  if (ach) ach.unlocked = true;
-
-  clampState();
-  updateShop();
-  updateStats();
-  renderAchievements();
-  saveGame();
-}
-document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
-
-/* -------------------- GOLDEN ROCK -------------------- */
+/* ============================================================
+   GOLDEN ROCK SPAWN
+   ============================================================ */
 setInterval(() => {
-  if (Math.random() < 0.15) {
-    goldenRock.style.display = "block";
-    setTimeout(() => goldenRock.style.display = "none", 5000);
-  }
-}, 30000);
-/* -------------------- TICK LOOP -------------------- */
-setInterval(() => {
-  const gain = getPerSecond();
-  if (gain > 0) {
-    score += gain;
-    totalRocksAllTime += gain;
-    clampState();
-    updateStats();
-    checkAchievements();
-  }
+    if (Math.random() < 0.05) {
+        goldenRock.style.display = "block";
+        setTimeout(() => goldenRock.style.display = "none", 5000);
+    }
+}, 3000);
 
-  if (Date.now() - lastClickTime > 1500) {
-    combo = 0;
-    comboMultiplier = 1;
-    document.getElementById("combo").innerText = "Combo: 0 (x1)";
-  }
+/* ============================================================
+   AUTO MINING
+   ============================================================ */
+setInterval(async () => {
+    player.rocks += player.perSecond;
+    player.totalAllTime += player.perSecond;
+    updateUI();
+    await saveCloud();
 }, 1000);
 
-/* -------------------- SAVE GAME -------------------- */
-function saveGame() {
-  if (!playerUid) return;
-
-  clampState();
-
-  const data = {
-    name: currentPlayerName || "Guest",
-    score: score,
-    perClickBase: perClickBase,
-    perSecondBase: perSecondBase,
-    prestigeMultiplier: prestigeMultiplier,
-    totalRocksAllTime: totalRocksAllTime,
-    upgrades: upgrades,
-    achievements: achievements.map(a => ({
-      id: a.id,
-      unlocked: a.unlocked
-    })),
-    updatedAt: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  db.ref("players/" + playerUid).set(data).catch(() => {});
+/* ============================================================
+   SHOP SYSTEM
+   ============================================================ */
+function loadShop() {
+    shop.innerHTML = "";
+    shopItems.forEach(item => {
+        const cost = Math.floor(item.baseCost * Math.pow(1.2, item.amount));
+        const div = document.createElement("div");
+        div.className = "shop-item";
+        div.innerHTML = `${item.name} — Cost: ${cost}`;
+        div.onclick = () => buyItem(item);
+        shop.appendChild(div);
+    });
 }
 
-/* -------------------- LOAD GAME -------------------- */
-function loadGame() {
-  if (!playerUid) return;
+async function buyItem(item) {
+    const cost = Math.floor(item.baseCost * Math.pow(1.2, item.amount));
+    if (player.rocks >= cost) {
+        player.rocks -= cost;
+        item.amount++;
 
-  db.ref("players/" + playerUid).once("value").then(snapshot => {
+        if (item.id === 1) player.perClick += item.effect;
+        if (item.id === 2) player.perSecond += item.effect;
+        if (item.id === 3) player.perSecond += item.effect;
 
-    if (!snapshot.exists()) {
-      document.getElementById("nameScreen").style.display = "flex";
-      document.getElementById("gameContainer").classList.remove("show");
-      return;
+        updateUI();
+        loadShop();
+        await saveCloud();
     }
-
-    const data = snapshot.val();
-
-    score = data.score || 0;
-    perClickBase = data.perClickBase || 1;
-    perSecondBase = data.perSecondBase || 0;
-    prestigeMultiplier = data.prestigeMultiplier || 1;
-    totalRocksAllTime = data.totalRocksAllTime || 0;
-
-    if (data.upgrades) {
-      for (const key in upgrades) {
-        if (data.upgrades[key]) {
-          upgrades[key].cost = data.upgrades[key].cost;
-        }
-      }
-    }
-
-    if (data.achievements) {
-      data.achievements.forEach(saved => {
-        const a = achievements.find(x => x.id === saved.id);
-        if (a) a.unlocked = !!saved.unlocked;
-      });
-    }
-
-    clampState();
-    updateShop();
-    updateStats();
-    renderAchievements();
-    loadLeaderboards();
-
-    document.getElementById("nameScreen").style.display = "none";
-    document.getElementById("gameContainer").classList.add("show");
-  });
 }
 
-/* -------------------- LEADERBOARD -------------------- */
-function loadLeaderboards() {
-  db.ref("players").once("value").then(snapshot => {
-    if (!snapshot.exists()) {
-      leaderboardList.textContent = "No players yet.";
-      return;
-    }
+/* ============================================================
+   PRESTIGE
+   ============================================================ */
+prestigeBtn.onclick = async () => {
+    if (player.rocks < 10000) return alert("You need 10,000 rocks to prestige!");
 
-    const players = Object.entries(snapshot.val()).map(([uid, p]) => ({
-      name: p.name || "Player",
-      score: Number(p.score) || 0,
-      totalRocksAllTime: Number(p.totalRocksAllTime) || 0,
-      prestigeMultiplier: Number(p.prestigeMultiplier) || 1
-    }));
+    player.prestige++;
+    player.rocks = 0;
+    player.perClick = 1 + player.prestige;
+    player.perSecond = 0;
 
-    const topN = arr => arr.slice(0, 10);
+    updateUI();
+    await saveCloud();
+};
 
-    const byScore = topN([...players].sort((a, b) => b.score - a.score));
-    const byAllTime = topN([...players].sort((a, b) => b.totalRocksAllTime - a.totalRocksAllTime));
-    const byPrestige = topN([...players].sort((a, b) => b.prestigeMultiplier - a.prestigeMultiplier));
+/* ============================================================
+   FIRESTORE SAVE
+   ============================================================ */
+async function saveCloud() {
+    if (!uid || !authReady) return;
 
-    let out = [];
+    const ref = doc(db, "players", uid);
 
-    out.push("=== Top Score ===");
-    byScore.forEach((p, i) => out.push(`${i + 1}. ${p.name} — ${Math.floor(p.score)}`));
-
-    out.push("\n=== Top All-Time ===");
-    byAllTime.forEach((p, i) => out.push(`${i + 1}. ${p.name} — ${Math.floor(p.totalRocksAllTime)}`));
-
-    out.push("\n=== Top Prestige ===");
-    byPrestige.forEach((p, i) => out.push(`${i + 1}. ${p.name} — x${p.prestigeMultiplier}`));
-
-    leaderboardList.textContent = out.join("\n");
-  });
+    await setDoc(ref, {
+        name: player.name || "Guest",
+        rocks: player.rocks,
+        goldenRocks: player.goldenRocks,
+        perClick: player.perClick,
+        perSecond: player.perSecond,
+        combo: player.combo,
+        prestige: player.prestige,
+        totalAllTime: player.totalAllTime,
+        updatedAt: Date.now()
+    }, { merge: true });
 }
 
-/* -------------------- NAME SCREEN -------------------- */
-startBtn.addEventListener("click", () => {
-  if (!authReady) return;
+/* ============================================================
+   FIRESTORE LOAD
+   ============================================================ */
+async function loadCloudSave() {
+    if (!uid) return;
 
-  let name = nameInput.value.trim();
-  if (!name) name = "Guest";
+    const ref = doc(db, "players", uid);
+    const snap = await getDoc(ref);
 
-  currentPlayerName = name;
-  localStorage.setItem("rockPlayerName", name);
+    if (!snap.exists()) {
+        nameScreen.style.display = "flex";
+        return;
+    }
 
-  currentPlayerLabel.innerText = "Player: " + currentPlayerName;
+    Object.assign(player, snap.data());
 
-  document.getElementById("nameScreen").style.display = "none";
-  document.getElementById("gameContainer").classList.add("show");
+    nameScreen.style.display = "none";
+    updateUI();
+    loadShop();
+    loadLeaderboard();
+}
 
-  saveGame();
-});
+/* ============================================================
+   LEADERBOARD (TOP 100 ROCKS)
+   ============================================================ */
+async function loadLeaderboard() {
+    leaderboard.innerHTML = "Loading...";
 
-/* -------------------- AUTO-SAVE -------------------- */
-setInterval(saveGame, 5000);
+    const q = query(
+        collection(db, "players"),
+        orderBy("rocks", "desc"),
+        limit(100)
+    );
+
+    const snap = await getDocs(q);
+
+    leaderboard.innerHTML = "";
+
+    snap.forEach(doc => {
+        const p = doc.data();
+        const div = document.createElement("div");
+        div.innerHTML = `${p.name}: ${Math.floor(p.rocks)}`;
+        leaderboard.appendChild(div);
+    });
+}
+
+/* ============================================================
+   UI UPDATE
+   ============================================================ */
+function updateUI() {
+    rockCount.textContent = player.rocks;
+    goldenCount.textContent = player.goldenRocks;
+    perClick.textContent = player.perClick;
+    perSecond.textContent = player.perSecond;
+    comboDisplay.textContent = `Combo: ${player.combo}`;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+loadShop();
+updateUI();
