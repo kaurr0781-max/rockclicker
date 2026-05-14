@@ -293,7 +293,16 @@ function loadGame() {
   if (!playerToken) return;
 
   db.ref("players/" + playerToken).once("value").then(snapshot => {
-    if (!snapshot.exists() || snapshot.val() === null) {
+   if (!snapshot.exists() || snapshot.val() === null) {
+    document.getElementById("nameScreen").style.display = "flex";
+    document.getElementById("gameContainer").style.display = "none";
+    updateShop();
+    updateStats();
+    renderAchievements();
+    loadLeaderboards();
+    return;
+}
+
       updateShop();
       updateStats();
       renderAchievements();
