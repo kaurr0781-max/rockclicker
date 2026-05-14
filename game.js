@@ -266,22 +266,32 @@ function saveGame() {
     .catch(() => {});
 }
 
-function loadGame() {
-  if (!playerToken) return;
 
-  db.ref("players/" + playerToken).once("value").then(snapshot => {
 
-    // ⭐ FIXED: ALWAYS SHOW NAME SCREEN IF SAVE IS MISSING
-   if (!snapshot.exists() || snapshot.val() === null) {
-    document.getElementById("nameScreen").style.display = "flex";
-    document.getElementById("gameContainer").classList.remove("show");
+function saveGame() {
+    if (!playerToken) return;
+    clampState();
 
-    updateShop();
-    updateStats();
-    renderAchievements();
-    loadLeaderboards();
-    return;
+    const data = {
+        name: currentPlayerName,
+        score: rocks,
+        perClickBase: rocksPerClick,
+        perSecondBase: rocksPerSecond,
+        prestigeMultiplier: prestigeMultiplier,
+        totalRocksAllTime: totalRocksAllTime,
+        upgrades: upgrades,
+        achievements: achievements.map(a => ({
+            id: a.id,
+            unlocked: a.unlocked
+        })),
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref("players/" + playerToken).set(data)
+        .then(() => loadLeaderboards())
+        .catch(() => {});
 }
+  
 
 
     const data = snapshot.val();
