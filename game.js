@@ -15,17 +15,20 @@ const db = firebase.database();
 
 // -------------------- AUTH (ANONYMOUS) --------------------
 let playerUid = null;
-let currentPlayerName = localStorage.getItem("rockPlayerName") || null;
+let authReady = false;
 
 firebase.auth().onAuthStateChanged(user => {
   if (user) {
     playerUid = user.uid;
-    // If user already exists, try loading game immediately
+    authReady = true;
+
+    // Only load game AFTER auth is ready
     loadGame();
   } else {
     firebase.auth().signInAnonymously().catch(console.error);
   }
 });
+
 
 // -------------------- GAME STATE --------------------
 let score = 0;
@@ -351,6 +354,8 @@ function loadLeaderboards() {
 
 /* -------------------- NAME SCREEN -------------------- */
 startBtn.addEventListener("click", () => {
+  if (!authReady) return; // Prevent clicking before auth is ready
+
   let name = nameInput.value.trim();
   if (!name) name = "Guest";
 
