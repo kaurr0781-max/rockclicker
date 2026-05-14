@@ -1,4 +1,4 @@
-// -------------------- FIREBASE INIT --------------------
+/* -------------------- FIREBASE INIT -------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyBtEIDdaZQAy7iQpeCgDgV7W8Xo8feKALA",
   authDomain: "rocket-clicker-64f24.firebaseapp.com",
@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// -------------------- AUTH (ANONYMOUS) --------------------
+/* -------------------- AUTH (ANONYMOUS) -------------------- */
 let playerUid = null;
 let authReady = false;
 
@@ -22,15 +22,16 @@ firebase.auth().onAuthStateChanged(user => {
     playerUid = user.uid;
     authReady = true;
 
-    // Only load game AFTER auth is ready
-    loadGame();
+    // Delay ensures Firebase finishes before loading
+    setTimeout(() => {
+      loadGame();
+    }, 200);
   } else {
     firebase.auth().signInAnonymously().catch(console.error);
   }
 });
 
-
-// -------------------- GAME STATE --------------------
+/* -------------------- GAME STATE -------------------- */
 let score = 0;
 let perClickBase = 1;
 let perSecondBase = 0;
@@ -70,7 +71,7 @@ let achievements = [
   { id: "a6", title: "Prestiged", desc: "Prestige at least once.", condition: () => prestigeMultiplier > 1, unlocked: false }
 ];
 
-// -------------------- DOM ELEMENTS --------------------
+/* -------------------- DOM ELEMENTS -------------------- */
 const rockImg = document.getElementById("rock");
 const goldenRock = document.getElementById("goldenRock");
 const startBtn = document.getElementById("startBtn");
@@ -78,7 +79,7 @@ const nameInput = document.getElementById("playerNameInput");
 const currentPlayerLabel = document.getElementById("currentPlayerLabel");
 const leaderboardList = document.getElementById("leaderboardList");
 
-// -------------------- HELPERS --------------------
+/* -------------------- HELPERS -------------------- */
 function getPerClick() {
   return perClickBase * prestigeMultiplier;
 }
@@ -98,7 +99,7 @@ function clampState() {
   prestigeMultiplier = Math.max(1, Math.min(prestigeMultiplier, 1e6));
 }
 
-// -------------------- UI UPDATES --------------------
+/* -------------------- UI UPDATES -------------------- */
 function updateStats() {
   document.getElementById("score").innerText = "Rocks: " + Math.floor(score);
   document.getElementById("perClick").innerText = "Per Click: " + getPerClick();
@@ -113,6 +114,7 @@ function updateShop() {
     if (el) el.innerText = upgrades[key].cost;
   }
 }
+
 /* -------------------- PARTICLES -------------------- */
 function spawnParticle(x, y, text, color = "#facc15") {
   const rect = document.body.getBoundingClientRect();
@@ -176,7 +178,7 @@ window.buyUpgrade = buyUpgrade;
 /* -------------------- CLICK HANDLERS -------------------- */
 function handleClick(e, gain, isGolden = false) {
   const now = Date.now();
-  combo = now - lastClickTime < 600 ? combo + 1 : 1;
+  combo = now - last.lastClickTime < 600 ? combo + 1 : 1;
   lastClickTime = now;
 
   comboMultiplier = 1 + Math.floor(combo / 10);
@@ -231,6 +233,7 @@ setInterval(() => {
     setTimeout(() => goldenRock.style.display = "none", 5000);
   }
 }, 30000);
+
 /* -------------------- TICK LOOP -------------------- */
 setInterval(() => {
   const gain = getPerSecond();
@@ -249,7 +252,7 @@ setInterval(() => {
   }
 }, 1000);
 
-/* -------------------- SAVE GAME (AUTH-SECURE) -------------------- */
+/* -------------------- SAVE GAME -------------------- */
 function saveGame() {
   if (!playerUid) return;
 
@@ -273,13 +276,13 @@ function saveGame() {
   db.ref("players/" + playerUid).set(data).catch(() => {});
 }
 
-/* -------------------- LOAD GAME (AUTH-SECURE) -------------------- */
+/* -------------------- LOAD GAME -------------------- */
 function loadGame() {
   if (!playerUid) return;
 
   db.ref("players/" + playerUid).once("value").then(snapshot => {
+
     if (!snapshot.exists()) {
-      // No save yet → show name screen
       document.getElementById("nameScreen").style.display = "flex";
       document.getElementById("gameContainer").classList.remove("show");
       return;
@@ -313,6 +316,9 @@ function loadGame() {
     updateStats();
     renderAchievements();
     loadLeaderboards();
+
+    document.getElementById("nameScreen").style.display = "none";
+    document.getElementById("gameContainer").classList.add("show");
   });
 }
 
@@ -354,7 +360,7 @@ function loadLeaderboards() {
 
 /* -------------------- NAME SCREEN -------------------- */
 startBtn.addEventListener("click", () => {
-  if (!authReady) return; // Prevent clicking before auth is ready
+  if (!authReady) return;
 
   let name = nameInput.value.trim();
   if (!name) name = "Guest";
