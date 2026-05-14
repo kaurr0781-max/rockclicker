@@ -79,7 +79,6 @@ function getPerSecond() {
   return perSecondBase * prestigeMultiplier;
 }
 
-// Anti-cheat sanity clamp
 function clampState() {
   const maxVal = 1e15;
   const maxRate = 1e9;
@@ -101,13 +100,10 @@ function updateStats() {
 }
 
 function updateShop() {
-  document.getElementById("clickPowerCost").innerText = upgrades.clickPower.cost;
-  document.getElementById("autoMinerCost").innerText = upgrades.autoMiner.cost;
-  document.getElementById("drillCost").innerText = upgrades.drill.cost;
-  document.getElementById("factoryCost").innerText = upgrades.factory.cost;
-  document.getElementById("quarryCost").innerText = upgrades.quarry.cost;
-  document.getElementById("robotCost").innerText = upgrades.robot.cost;
-  document.getElementById("volcanoCost").innerText = upgrades.volcano.cost;
+  for (const key in upgrades) {
+    const el = document.getElementById(key + "Cost");
+    if (el) el.innerText = upgrades[key].cost;
+  }
 }
 
 // -------------------- PARTICLES --------------------
@@ -130,14 +126,7 @@ function renderAchievements() {
   achievements.forEach(a => {
     const div = document.createElement("div");
     div.className = "ach" + (a.unlocked ? " unlocked" : "");
-    const t = document.createElement("span");
-    t.className = "title";
-    t.textContent = a.title;
-    const d = document.createElement("span");
-    d.className = "desc";
-    d.textContent = a.desc;
-    div.appendChild(t);
-    div.appendChild(d);
+    div.innerHTML = `<span class="title">${a.title}</span><span class="desc">${a.desc}</span>`;
     container.appendChild(div);
   });
 }
@@ -148,14 +137,13 @@ function checkAchievements() {
     if (!a.unlocked && a.condition()) {
       a.unlocked = true;
       changed = true;
-      // small popup particle at top center
       spawnParticle(window.innerWidth / 2, 60, "Achievement: " + a.title, "#22c55e");
     }
   });
   if (changed) renderAchievements();
 }
 
-// -------------------- SHOP / UPGRADES --------------------
+// -------------------- SHOP --------------------
 function buyUpgrade(type) {
   const upgrade = upgrades[type];
   if (!upgrade) return;
@@ -181,11 +169,7 @@ window.buyUpgrade = buyUpgrade;
 // -------------------- CLICK HANDLERS --------------------
 function handleClick(e, gain, isGolden = false) {
   const now = Date.now();
-  if (now - lastClickTime < 600) {
-    combo++;
-  } else {
-    combo = 1;
-  }
+  combo = now - lastClickTime < 600 ? combo + 1 : 1;
   lastClickTime = now;
 
   comboMultiplier = 1 + Math.floor(combo / 10);
@@ -200,10 +184,7 @@ function handleClick(e, gain, isGolden = false) {
   checkAchievements();
 }
 
-rockImg.addEventListener("click", (e) => {
-  handleClick(e, getPerClick(), false);
-});
-
+rockImg.addEventListener("click", (e) => handleClick(e, getPerClick()));
 goldenRock.addEventListener("click", (e) => {
   handleClick(e, getPerClick() * 100, true);
   goldenRock.style.display = "none";
@@ -221,9 +202,9 @@ function doPrestige() {
   perSecondBase = 0;
   totalRocksAllTime = 0;
 
-  Object.keys(upgrades).forEach(k => {
-    upgrades[k].cost = BASE_UPGRADE_COSTS[k];
-  });
+  for (const key in upgrades) {
+    upgrades[key].cost = BASE_UPGRADE_COSTS[key];
+  }
 
   const ach = achievements.find(a => a.id === "a6");
   if (ach) ach.unlocked = true;
@@ -236,19 +217,16 @@ function doPrestige() {
 }
 document.getElementById("prestigeBtn").addEventListener("click", doPrestige);
 
-// -------------------- GOLDEN ROCK EVENT --------------------
-function spawnGoldenRock() {
+// -------------------- GOLDEN ROCK --------------------
+setInterval(() => {
   if (Math.random() < 0.15) {
     goldenRock.style.display = "block";
-    setTimeout(() => {
-      goldenRock.style.display = "none";
-    }, 5000);
+    setTimeout(() => goldenRock.style.display = "none", 5000);
   }
-}
-setInterval(spawnGoldenRock, 30000);
+}, 30000);
 
 // -------------------- TICK LOOP --------------------
-function tick() {
+setInterval(() => {
   const gain = getPerSecond();
   if (gain > 0) {
     score += gain;
@@ -263,10 +241,9 @@ function tick() {
     comboMultiplier = 1;
     document.getElementById("combo").innerText = "Combo: 0 (x1)";
   }
-}
-setInterval(tick, 1000);
+}, 1000);
 
-// -------------------- FIREBASE SAVE / LOAD --------------------
+// -------------------- SAVE / LOAD --------------------
 function saveGame() {
   if (!playerToken) return;
 
@@ -285,7 +262,7 @@ function saveGame() {
   };
 
   db.ref("players/" + playerToken).set(data)
-    .then(() => updateGlobalLeaderboards())
+    .then(() => loadLeaderboards())
     .catch(() => {});
 }
 
@@ -293,16 +270,11 @@ function loadGame() {
   if (!playerToken) return;
 
   db.ref("players/" + playerToken).once("value").then(snapshot => {
-   if (!snapshot.exists() || snapshot.val() === null) {
-    document.getElementById("nameScreen").style.display = "flex";
-    document.getElementById("gameContainer").style.display = "none";
-    updateShop();
-    updateStats();
-    renderAchievements();
-    loadLeaderboards();
-    return;
-}
 
+    // ⭐ FIXED: ALWAYS SHOW NAME SCREEN IF SAVE IS MISSING
+    if (!snapshot.exists() || snapshot.val() === null) {
+      document.getElementById("nameScreen").style.display = "flex";
+      document.getElementById("gameContainer").style.display = "none";
       updateShop();
       updateStats();
       renderAchievements();
@@ -311,6 +283,7 @@ function loadGame() {
     }
 
     const data = snapshot.val();
+
     score = data.score || 0;
     perClickBase = data.perClickBase || 1;
     perSecondBase = data.perSecondBase || 0;
@@ -318,11 +291,11 @@ function loadGame() {
     totalRocksAllTime = data.totalRocksAllTime || 0;
 
     if (data.upgrades) {
-      Object.keys(upgrades).forEach(k => {
-        if (data.upgrades[k]) {
-          upgrades[k].cost = data.upgrades[k].cost || upgrades[k].cost;
+      for (const key in upgrades) {
+        if (data.upgrades[key]) {
+          upgrades[key].cost = data.upgrades[key].cost || upgrades[key].cost;
         }
-      });
+      }
     }
 
     if (data.achievements) {
@@ -340,11 +313,7 @@ function loadGame() {
   });
 }
 
-// -------------------- GLOBAL LEADERBOARDS --------------------
-function updateGlobalLeaderboards() {
-  loadLeaderboards();
-}
-
+// -------------------- LEADERBOARD --------------------
 function loadLeaderboards() {
   db.ref("players").once("value").then(snapshot => {
     if (!snapshot.exists()) {
@@ -353,47 +322,30 @@ function loadLeaderboards() {
     }
 
     const players = Object.entries(snapshot.val()).map(([token, p]) => ({
-      token,
       name: p.name || "Player",
       score: Number(p.score) || 0,
       totalRocksAllTime: Number(p.totalRocksAllTime) || 0,
       prestigeMultiplier: Number(p.prestigeMultiplier) || 1
     }));
 
-    const topN = (arr, n = 10) => arr.slice(0, n);
+    const topN = (arr) => arr.slice(0, 10);
 
-    const byCurrentScore = topN([...players].sort((a, b) => b.score - a.score));
+    const byScore = topN([...players].sort((a, b) => b.score - a.score));
     const byAllTime = topN([...players].sort((a, b) => b.totalRocksAllTime - a.totalRocksAllTime));
     const byPrestige = topN([...players].sort((a, b) => b.prestigeMultiplier - a.prestigeMultiplier));
-    const byCombined = topN([...players].sort((a, b) => (b.score * b.prestigeMultiplier) - (a.score * a.prestigeMultiplier)));
 
-    let lines = [];
+    let out = [];
 
-    lines.push("=== Top Current Score ===");
-    byCurrentScore.forEach((p, i) => {
-      lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.score)} score`);
-    });
+    out.push("=== Top Score ===");
+    byScore.forEach((p, i) => out.push(`${i + 1}. ${p.name} — ${Math.floor(p.score)}`));
 
-    lines.push("");
-    lines.push("=== Top All-Time Rocks ===");
-    byAllTime.forEach((p, i) => {
-      lines.push(`${i + 1}. ${p.name} — ${Math.floor(p.totalRocksAllTime)} rocks`);
-    });
+    out.push("\n=== Top All-Time ===");
+    byAllTime.forEach((p, i) => out.push(`${i + 1}. ${p.name} — ${Math.floor(p.totalRocksAllTime)}`));
 
-    lines.push("");
-    lines.push("=== Top Prestige Multiplier ===");
-    byPrestige.forEach((p, i) => {
-      lines.push(`${i + 1}. ${p.name} — x${p.prestigeMultiplier}`);
-    });
+    out.push("\n=== Top Prestige ===");
+    byPrestige.forEach((p, i) => out.push(`${i + 1}. ${p.name} — x${p.prestigeMultiplier}`));
 
-    lines.push("");
-    lines.push("=== Top Combined (Score × Prestige) ===");
-    byCombined.forEach((p, i) => {
-      const combined = Math.floor(p.score * p.prestigeMultiplier);
-      lines.push(`${i + 1}. ${p.name} — ${combined} power`);
-    });
-
-    leaderboardList.textContent = lines.join("\n");
+    leaderboardList.textContent = out.join("\n");
   });
 }
 
