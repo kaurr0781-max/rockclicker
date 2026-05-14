@@ -14,19 +14,16 @@
         overflow-x: hidden;
     }
 
-    /* Cyberpunk Glow */
     .glow {
         text-shadow: 0 0 10px #6a00ff, 0 0 20px #0066ff;
     }
 
-    /* Layout */
     .container {
         display: flex;
         width: 100%;
         height: 100vh;
     }
 
-    /* LEFT COLUMN — Gameplay */
     .left {
         width: 40%;
         padding: 20px;
@@ -62,7 +59,6 @@
         cursor: pointer;
     }
 
-    /* MIDDLE COLUMN — Stats + Shop */
     .middle {
         width: 30%;
         padding: 20px;
@@ -95,7 +91,6 @@
         background: rgba(255,255,255,0.15);
     }
 
-    /* RIGHT COLUMN — Achievements + Leaderboard + Prestige */
     .right {
         width: 30%;
         padding: 20px;
@@ -106,7 +101,7 @@
         padding: 15px;
         margin-top: 10px;
         border: none;
-        border-radius: 50px; /* Pill shape */
+        border-radius: 50px;
         font-size: 18px;
         font-weight: 700;
         cursor: pointer;
@@ -121,7 +116,6 @@
         transform: scale(1.03);
     }
 
-    /* Name Screen */
     #nameScreen {
         position: fixed;
         top: 0; left: 0;
@@ -157,7 +151,6 @@
 
 <body>
 
-<!-- NAME SCREEN -->
 <div id="nameScreen">
     <h1 class="glow">Enter Your Name</h1>
     <input id="nameInput" placeholder="Your Name">
@@ -166,7 +159,6 @@
 
 <div class="container">
 
-    <!-- LEFT COLUMN -->
     <div class="left">
         <h1 class="glow">Rock Clicker</h1>
 
@@ -176,9 +168,7 @@
         <h2 id="comboDisplay">Combo: 0</h2>
     </div>
 
-    <!-- MIDDLE COLUMN -->
     <div class="middle">
-
         <div class="panel">
             <h2>Stats</h2>
             <p>Rocks: <span id="rockCount">0</span></p>
@@ -191,12 +181,9 @@
             <h2>Shop</h2>
             <div id="shop"></div>
         </div>
-
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div class="right">
-
         <div class="panel">
             <h2>Achievements</h2>
             <div id="achievements"></div>
@@ -208,11 +195,13 @@
         </div>
 
         <button id="prestigeBtn">Prestige</button>
-
     </div>
 
 </div>
 
-<script src="game.js"></script>
+<!-- ⭐ FIXED LINE BELOW ⭐ -->
+<script type="module" src="game.js"></script>
+
 </body>
 </html>
+
