@@ -3,7 +3,7 @@
    ============================================================ */
 
 /* -------------------- FIREBASE IMPORTS -------------------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import { 
     getFirestore, doc, setDoc, getDoc, updateDoc,
     collection, query, orderBy, limit, getDocs 
