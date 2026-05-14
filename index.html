@@ -1,161 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Rock Clicker</title>
-<style>
+  <meta charset="UTF-8" />
+  <title>Rock Clicker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
     body {
-        font-family: Arial, sans-serif;
-        background: #1e1e1e;
-        color: white;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        user-select: none;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #222 0, #050509 55%, #000 100%);
+      color: #f5f5f5;
     }
 
+    .game-shell {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(10, 10, 20, 0.95);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      padding: 20px 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffe082, #ffb300, #ff6f00);
+      box-shadow: 0 0 18px rgba(255, 193, 7, 0.7);
+    }
+
+    .title-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-text h1 {
+      font-size: 1.3rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .title-text span {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .player-tag {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .player-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.9);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1.4fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 850px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .main-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .stat-value.gold {
+      color: #ffca28;
+      text-shadow: 0 0 10px rgba(255, 202, 40, 0.7);
+    }
+
+    .stat-value.accent {
+      color: #64b5f6;
+      text-shadow: 0 0 10px rgba(100, 181, 246, 0.7);
+    }
+
+    .rock-area {
+      margin-top: 6px;
+      padding: 18px;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, #1b1b2f, #050510);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .rock-btn {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: radial-gradient(circle at 30% 30%, #b0bec5, #546e7a, #263238);
+      box-shadow:
+        0 18px 35px rgba(0, 0, 0, 0.9),
+        0 0 18px rgba(144, 164, 174, 0.7);
+      position: relative;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .rock-btn:active {
+      transform: translateY(3px) scale(0.97);
+      box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(144, 164, 174, 0.5);
+    }
+
+    .rock-btn::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .golden-rock-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: radial-gradient(circle at 30% 30%, #ffe082, #ffb300, #ff6f00);
+      box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.9),
+        0 0 16px rgba(255, 193, 7, 0.9);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .golden-rock-btn:active {
+      transform: translateY(2px) scale(0.96);
+      box-shadow:
+        0 6px 12px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(255, 193, 7, 0.7);
+    }
+
+    .rock-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+
+    .shop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .shop-item {
+      padding: 10px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .shop-item-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .shop-item-name {
+      font-weight: 500;
+    }
+
+    .shop-item-desc {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .shop-item-cost {
+      font-size: 0.8rem;
+      color: #ffca28;
+    }
+
+    .shop-item button {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #42a5f5, #1e88e5);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(33, 150, 243, 0.5);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+    .shop-item button:active {
+      transform: translateY(2px);
+      box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4);
+      filter: brightness(0.95);
+    }
+
+    .footer-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .small-btn {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+      color: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .small-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Name screen overlay */
     #nameScreen {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        gap: 20px;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
     }
 
-    #gameContainer {
-        display: none; /* FIXED */
-        height: 100vh;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 40px;
+    .name-modal {
+      width: 100%;
+      max-width: 360px;
+      padding: 22px 20px 18px;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, #1b1b2f, #050510);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    /* When game should show */
-    #gameContainer.show {
-        display: flex;
+    .name-modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
     }
 
-    #rock {
-        width: 200px;
-        cursor: pointer;
-        transition: transform 0.1s;
+    .name-modal p {
+      font-size: 0.8rem;
+      opacity: 0.8;
     }
 
-    #rock:active {
-        transform: scale(0.9);
+    .name-input-row {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
     }
 
-    #goldenRock {
-        width: 150px;
-        display: none;
-        cursor: pointer;
-        animation: glow 1s infinite alternate;
+    .name-input-row input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.4);
+      color: #f5f5f5;
+      font-size: 0.85rem;
+      outline: none;
     }
 
-    @keyframes glow {
-        from { filter: drop-shadow(0 0 5px gold); }
-        to { filter: drop-shadow(0 0 20px gold); }
+    .name-input-row input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
     }
 
-    .particle {
-        position: absolute;
-        font-size: 20px;
-        animation: rise 0.6s ease-out forwards;
-        pointer-events: none;
+    .primary-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #42a5f5, #1e88e5);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(33, 150, 243, 0.6);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      white-space: nowrap;
     }
 
-    @keyframes rise {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-40px); }
+    .primary-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 5px 12px rgba(33, 150, 243, 0.5);
+      filter: brightness(0.95);
     }
-
-    .shop button {
-        margin: 5px;
-        padding: 10px;
-        background: #333;
-        color: white;
-        border: 1px solid #555;
-        cursor: pointer;
-    }
-
-    .shop button:hover {
-        background: #444;
-    }
-
-    .ach {
-        margin: 5px;
-        padding: 10px;
-        background: #222;
-        border-left: 4px solid #555;
-        text-align: left;
-    }
-
-    .ach.unlocked {
-        border-left: 4px solid #22c55e;
-    }
-</style>
+  </style>
 </head>
 <body>
-
-<h1>Rock Clicker</h1>
-
-<!-- NAME SCREEN -->
-<div id="nameScreen">
-    <h2>ROCK CLICKER — ENTER YOUR NAME</h2>
-    <input id="playerNameInput" placeholder="Your name" style="padding:10px;font-size:16px;">
-    <button id="startBtn" style="padding:10px 20px;font-size:16px;background:#22c55e;border:none;color:white;cursor:pointer;">
-        Start Game
-    </button>
-</div>
-
-<!-- GAME SCREEN -->
-<div id="gameContainer">
-    <div>
-        <img id="rock" src="rock.png">
-        <img id="goldenRock" src="rock.png">
-
-        <p id="score">Rocks: 0</p>
-        <p id="perClick">Per Click: 1</p>
-        <p id="perSecond">Per Second: 0</p>
-        <p id="prestige">Prestige Multiplier: x1</p>
-        <p id="combo">Combo: 0 (x1)</p>
-
-        <button id="prestigeBtn" style="padding:10px;background:#444;color:white;border:none;cursor:pointer;">
-            Prestige
-        </button>
-
-        <p id="currentPlayerLabel">Player: Guest</p>
+  <!-- Name screen -->
+  <div id="nameScreen">
+    <div class="name-modal">
+      <h2>Welcome, Rock Clicker</h2>
+      <p>Choose a player name to start your journey.</p>
+      <div class="name-input-row">
+        <input id="playerNameInput" type="text" maxlength="16" placeholder="Enter your name..." />
+        <button id="startBtn" class="primary-btn">Start</button>
+      </div>
     </div>
+  </div>
 
-    <div class="shop">
-        <h2>Shop</h2>
-        <button onclick="buyUpgrade('clickPower')">Click Power (<span id="clickPowerCost">10</span>)</button>
-        <button onclick="buyUpgrade('autoMiner')">Auto Miner (<span id="autoMinerCost">50</span>)</button>
-        <button onclick="buyUpgrade('drill')">Drill (<span id="drillCost">200</span>)</button>
-        <button onclick="buyUpgrade('factory')">Factory (<span id="factoryCost">1000</span>)</button>
-        <button onclick="buyUpgrade('quarry')">Quarry (<span id="quarryCost">5000</span>)</button>
-        <button onclick="buyUpgrade('robot')">Robot (<span id="robotCost">20000</span>)</button>
-        <button onclick="buyUpgrade('volcano')">Volcano (<span id="volcanoCost">100000</span>)</button>
+  <!-- Main game container -->
+  <div class="game-shell">
+    <div class="card" id="gameContainer" style="display:none;">
+      <div class="top-bar">
+        <div class="logo-title">
+          <div class="logo-circle"></div>
+          <div class="title-text">
+            <h1>Rock Clicker</h1>
+            <span>Idle mining • Cloud save</span>
+          </div>
+        </div>
+        <div class="player-tag">
+          <div class="player-dot"></div>
+          <span id="playerNameLabel">Player</span>
+        </div>
+      </div>
+
+      <div class="layout">
+        <!-- Main panel -->
+        <div class="main-panel">
+          <div class="stats-row">
+            <div class="stat-pill">
+              <span class="stat-label">Rocks</span>
+              <span id="rockCount" class="stat-value">0</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Golden Rocks</span>
+              <span id="goldenRockCount" class="stat-value gold">0</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">Rocks / Click</span>
+              <span id="rocksPerClick" class="stat-value accent">1</span>
+            </div>
+          </div>
+
+          <div class="rock-area">
+            <button id="rock" class="rock-btn" aria-label="Click the rock"></button>
+            <span class="rock-label">Tap the rock to mine more.</span>
+
+            <div style="margin-top: 10px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <button id="goldenRock" class="golden-rock-btn" aria-label="Golden rock"></button>
+              <span class="rock-label" style="font-size:0.8rem;">Golden rock appears on special events.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side panel / shop -->
+        <div class="side-panel">
+          <div>
+            <div class="panel-title">Upgrades</div>
+            <div id="shopList" class="shop-list">
+              <!-- You can fill these from JS later -->
+              <div class="shop-item">
+                <div class="shop-item-main">
+                  <span class="shop-item-name">Stronger Pickaxe</span>
+                  <span class="shop-item-desc">+1 rock per click.</span>
+                  <span class="shop-item-cost">Cost: 10 rocks</span>
+                </div>
+                <button>Buy</button>
+              </div>
+
+              <div class="shop-item">
+                <div class="shop-item-main">
+                  <span class="shop-item-name">Auto Miner</span>
+                  <span class="shop-item-desc">Generates rocks over time.</span>
+                  <span class="shop-item-cost">Cost: 50 rocks</span>
+                </div>
+                <button>Buy</button>
+              </div>
+
+              <div class="shop-item">
+                <div class="shop-item-main">
+                  <span class="shop-item-name">Golden Chance</span>
+                  <span class="shop-item-desc">Higher chance for golden rock.</span>
+                  <span class="shop-item-cost">Cost: 100 rocks</span>
+                </div>
+                <button>Buy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-row">
+            <span id="statusText">Synced with cloud.</span>
+            <button id="saveBtn" class="small-btn">Save now</button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div>
-        <h2>Achievements</h2>
-        <div id="achList"></div>
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        <h2>Leaderboard</h2>
-        <pre id="leaderboardList" style="text-align:left;"></pre>
-    </div>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<!-- YOUR GAME CODE -->
-<script src="game.js"></script>
-
+  <!-- YOUR GAME CODE -->
+  <script src="game.js"></script>
 </body>
 </html>
+
