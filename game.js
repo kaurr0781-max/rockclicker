@@ -1,5 +1,4 @@
-
-/* -------------------- FIREBASE INIT -------------------- */
+// -------------------- FIREBASE INIT --------------------
 const firebaseConfig = {
   apiKey: "AIzaSyBtEIDdaZQAy7iQpeCgDgV7W8Xo8feKALA",
   authDomain: "rocket-clicker-64f24.firebaseapp.com",
@@ -14,16 +13,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* -------------------- TOKEN-BASED ACCOUNT -------------------- */
-let playerToken = localStorage.getItem("rockPlayerToken");
-if (!playerToken) {
-  playerToken = "tok_" + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
-  localStorage.setItem("rockPlayerToken", playerToken);
-}
-
+// -------------------- AUTH (ANONYMOUS) --------------------
+let playerUid = null;
 let currentPlayerName = localStorage.getItem("rockPlayerName") || null;
 
-/* -------------------- GAME STATE -------------------- */
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    playerUid = user.uid;
+    // If user already exists, try loading game immediately
+    loadGame();
+  } else {
+    firebase.auth().signInAnonymously().catch(console.error);
+  }
+});
+
+// -------------------- GAME STATE --------------------
 let score = 0;
 let perClickBase = 1;
 let perSecondBase = 0;
@@ -63,7 +67,7 @@ let achievements = [
   { id: "a6", title: "Prestiged", desc: "Prestige at least once.", condition: () => prestigeMultiplier > 1, unlocked: false }
 ];
 
-/* -------------------- DOM ELEMENTS -------------------- */
+// -------------------- DOM ELEMENTS --------------------
 const rockImg = document.getElementById("rock");
 const goldenRock = document.getElementById("goldenRock");
 const startBtn = document.getElementById("startBtn");
@@ -71,7 +75,7 @@ const nameInput = document.getElementById("playerNameInput");
 const currentPlayerLabel = document.getElementById("currentPlayerLabel");
 const leaderboardList = document.getElementById("leaderboardList");
 
-/* -------------------- HELPERS -------------------- */
+// -------------------- HELPERS --------------------
 function getPerClick() {
   return perClickBase * prestigeMultiplier;
 }
@@ -91,7 +95,7 @@ function clampState() {
   prestigeMultiplier = Math.max(1, Math.min(prestigeMultiplier, 1e6));
 }
 
-/* -------------------- UI UPDATES -------------------- */
+// -------------------- UI UPDATES --------------------
 function updateStats() {
   document.getElementById("score").innerText = "Rocks: " + Math.floor(score);
   document.getElementById("perClick").innerText = "Per Click: " + getPerClick();
@@ -242,9 +246,9 @@ setInterval(() => {
   }
 }, 1000);
 
-/* -------------------- SAVE GAME -------------------- */
+/* -------------------- SAVE GAME (AUTH-SECURE) -------------------- */
 function saveGame() {
-  if (!playerToken) return;
+  if (!playerUid) return;
 
   clampState();
 
@@ -263,18 +267,16 @@ function saveGame() {
     updatedAt: firebase.database.ServerValue.TIMESTAMP
   };
 
-  db.ref("players/" + playerToken).set(data)
-    .then(() => loadLeaderboards())
-    .catch(() => {});
+  db.ref("players/" + playerUid).set(data).catch(() => {});
 }
 
-/* -------------------- LOAD GAME -------------------- */
+/* -------------------- LOAD GAME (AUTH-SECURE) -------------------- */
 function loadGame() {
-  if (!playerToken) return;
+  if (!playerUid) return;
 
-  db.ref("players/" + playerToken).once("value").then(snapshot => {
-
-    if (!snapshot.exists() || snapshot.val() === null) {
+  db.ref("players/" + playerUid).once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      // No save yet → show name screen
       document.getElementById("nameScreen").style.display = "flex";
       document.getElementById("gameContainer").classList.remove("show");
       return;
@@ -291,7 +293,7 @@ function loadGame() {
     if (data.upgrades) {
       for (const key in upgrades) {
         if (data.upgrades[key]) {
-          upgrades[key].cost = data.upgrades[key].cost || upgrades[key].cost;
+          upgrades[key].cost = data.upgrades[key].cost;
         }
       }
     }
@@ -319,7 +321,7 @@ function loadLeaderboards() {
       return;
     }
 
-    const players = Object.entries(snapshot.val()).map(([token, p]) => ({
+    const players = Object.entries(snapshot.val()).map(([uid, p]) => ({
       name: p.name || "Player",
       score: Number(p.score) || 0,
       totalRocksAllTime: Number(p.totalRocksAllTime) || 0,
@@ -361,7 +363,6 @@ startBtn.addEventListener("click", () => {
   document.getElementById("gameContainer").classList.add("show");
 
   saveGame();
-  loadGame();
 });
 
 /* -------------------- AUTO-SAVE -------------------- */
