@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Clicker 🪨</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Main Clicker -->
+        <div class="left-panel">
+            <div class="stats-top">
+                <div class="stat-box">
+                    <div class="stat-label">Rocks</div>
+                    <div class="stat-value" id="rockCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Per Second</div>
+                    <div class="stat-value" id="perSecond">0</div>
+                </div>
+            </div>
+
+            <div class="clicker-area">
+                <button class="rock-button" id="rockButton">
+                    <div class="rock-emoji">🪨</div>
+                </button>
+                <div class="click-multiplier" id="multiplierDisplay">×1</div>
+            </div>
+
+            <div class="stats-bottom">
+                <div class="stat-box">
+                    <div class="stat-label">Total Earned</div>
+                    <div class="stat-value" id="totalEarned">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Clicks</div>
+                    <div class="stat-value" id="clickCount">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Store -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <h2>Store</h2>
+            </div>
+
+            <!-- Buildings Tab -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="buildings">Buildings</button>
+                <button class="tab-btn" data-tab="upgrades">Upgrades</button>
+            </div>
+
+            <!-- Buildings Section -->
+            <div class="tab-content active" id="buildings-tab">
+                <div class="building-item">
+                    <div class="building-info">
+                        <h3>Miner</h3>
+                        <p class="building-desc">A simple miner</p>
+                        <p class="building-income">+0.1 rocks/sec</p>
+                    </div>
+                    <div class="building-stats">
+                        <div class="owned" id="miner-owned">0</div>
+                        <button class="buy-btn" data-building="miner" data-cost="15">
+                            <span class="cost">15</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="building-item">
+                    <div class="building-info">
+                        <h3>Excavator</h3>
+                        <p class="building-desc">Faster mining equipment</p>
+                        <p class="building-income">+1 rock/sec</p>
+                    </div>
+                    <div class="building-stats">
+                        <div class="owned" id="excavator-owned">0</div>
+                        <button class="buy-btn" data-building="excavator" data-cost="100">
+                            <span class="cost">100</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="building-item">
+                    <div class="building-info">
+                        <h3>Quarry</h3>
+                        <p class="building-desc">Industrial quarry</p>
+                        <p class="building-income">+10 rocks/sec</p>
+                    </div>
+                    <div class="building-stats">
+                        <div class="owned" id="quarry-owned">0</div>
+                        <button class="buy-btn" data-building="quarry" data-cost="500">
+                            <span class="cost">500</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="building-item">
+                    <div class="building-info">
+                        <h3>Mine</h3>
+                        <p class="building-desc">Deep rock mining</p>
+                        <p class="building-income">+100 rocks/sec</p>
+                    </div>
+                    <div class="building-stats">
+                        <div class="owned" id="mine-owned">0</div>
+                        <button class="buy-btn" data-building="mine" data-cost="5000">
+                            <span class="cost">5000</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upgrades Section -->
+            <div class="tab-content" id="upgrades-tab">
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <h3>Better Pickaxe 🔨</h3>
+                        <p class="upgrade-desc">Doubles your click power</p>
+                    </div>
+                    <div class="upgrade-stats">
+                        <button class="buy-btn upgrade-buy" data-upgrade="betterpickaxe" data-cost="100">
+                            <span class="cost">100</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <h3>Diamond Pickaxe 💎</h3>
+                        <p class="upgrade-desc">5x click power boost</p>
+                    </div>
+                    <div class="upgrade-stats">
+                        <button class="buy-btn upgrade-buy" data-upgrade="diamondpickaxe" data-cost="1000">
+                            <span class="cost">1000</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <h3>Mythic Pickaxe ⚡</h3>
+                        <p class="upgrade-desc">20x click power boost</p>
+                    </div>
+                    <div class="upgrade-stats">
+                        <button class="buy-btn upgrade-buy" data-upgrade="mythicpickaxe" data-cost="10000">
+                            <span class="cost">10000</span>
+                            <span class="icon">🪨</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* LEFT PANEL - Clicker */
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stats-top, .stats-bottom {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* Clicker Area */
+.clicker-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    position: relative;
+}
+
+.rock-button {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 20px 60px rgba(245, 87, 108, 0.4), inset -2px -2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-size: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    transform-origin: center;
+}
+
+.rock-button:hover {
+    box-shadow: 0 25px 70px rgba(245, 87, 108, 0.5), inset -2px -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.rock-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 15px 40px rgba(245, 87, 108, 0.3), inset 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.rock-emoji {
+    animation: rock-bounce 0.6s ease-out;
+}
+
+@keyframes rock-bounce {
+    0% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.click-multiplier {
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* RIGHT PANEL - Store */
+.right-panel {
+    width: 350px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.panel-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.panel-header h2 {
+    font-size: 24px;
+    margin: 0;
+}
+
+/* Tab System */
+.tab-buttons {
+    display: flex;
+    border-bottom: 2px solid #f0f0f0;
+    background: #fafafa;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #999;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Building Items */
+.building-item, .upgrade-item {
+    background: white;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+    cursor: default;
+}
+
+.building-item:hover, .upgrade-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.building-info {
+    flex: 1;
+}
+
+.building-info h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.building-desc {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.building-income {
+    font-size: 13px;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.upgrade-info {
+    flex: 1;
+}
+
+.upgrade-info h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.upgrade-desc {
+    font-size: 12px;
+    color: #999;
+}
+
+.building-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.owned {
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #667eea;
+    min-width: 40px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.upgrade-stats {
+    display: flex;
+    gap: 10px;
+}
+
+/* Buy Buttons */
+.buy-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.buy-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.buy-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.buy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.buy-btn .cost {
+    font-size: 13px;
+}
+
+.buy-btn .icon {
+    font-size: 14px;
+}
+
+/* Scrollbar Styling */
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+/* Animations */
+@keyframes popUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .right-panel {
+        width: 100%;
+        max-height: 400px;
+    }
+
+    .rock-button {
+        width: 180px;
+        height: 180px;
+        font-size: 80px;
+    }
+}
